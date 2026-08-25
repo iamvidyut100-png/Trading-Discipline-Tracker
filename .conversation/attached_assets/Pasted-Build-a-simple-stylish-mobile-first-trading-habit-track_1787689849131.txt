@@ -1,0 +1,279 @@
+Build a simple, stylish, mobile-first trading habit tracker web app.
+
+Core concept
+
+This is NOT a traditional trading journal. It is a fast, swipe-based trading discipline tracker.
+
+The user should be able to complete a trade journal in 30–60 seconds with almost zero typing.
+
+Design
+
+- Premium, minimal, modern UI
+- Mobile-first
+- Dark theme
+- Clean typography
+- Smooth animations
+- Large touch-friendly buttons
+- Card-based interface
+- Swipe/drag interactions
+- Progress indicator such as "2 / 6"
+- Avoid clutter
+- Avoid unnecessary text fields
+- Everything should feel quick and interactive
+
+Main navigation
+
+Create 4 main sections:
+
+1. Dashboard
+2. New Trade
+3. Trade History
+4. Analytics
+
+---
+
+NEW TRADE FLOW
+
+The New Trade flow has 3 stages:
+
+Stage 1 — BEFORE TRADE
+
+Show one question/card at a time.
+
+Questions:
+
+1. Is your setup clear?
+   
+   - YES
+   - NO
+
+2. Is your entry planned?
+   
+   - YES
+   - NO
+
+3. Is Stop Loss defined?
+   
+   - YES
+   - NO
+
+4. Is Target defined?
+   
+   - YES
+   - NO
+
+5. What's your current emotion?
+   
+   - Calm
+   - Neutral
+   - Fear
+   - Greed
+   - Revenge
+
+6. Upload chart screenshot
+   
+   - Take Screenshot
+   - Upload Screenshot
+
+Each answer should automatically move to the next card.
+
+At the end show:
+
+Swipe → Start Trade
+
+---
+
+Stage 2 — DURING TRADE
+
+Keep this stage extremely short.
+
+Questions:
+
+1. Are you following your plan?
+   
+   - YES
+   - NO
+
+2. Did you move your Stop Loss?
+   
+   - YES
+   - NO
+
+3. Are you overtrading?
+   
+   - YES
+   - NO
+
+4. Current emotion
+   
+   - Calm
+   - Neutral
+   - Fear
+   - Greed
+
+5. Optional screenshot upload.
+
+Finish with:
+
+Swipe → Close Trade
+
+---
+
+Stage 3 — AFTER TRADE
+
+Questions:
+
+1. Trade Result
+   
+   - WIN
+   - LOSS
+   - BREAKEVEN
+
+2. Did you follow your plan?
+   
+   - YES
+   - NO
+
+3. What went wrong?
+   
+   - No mistake
+   - Early Entry
+   - Late Entry
+   - Moved SL
+   - Early Exit
+   - Overtrade
+   - Revenge Trade
+
+4. How disciplined were you?
+   
+   - 1
+   - 2
+   - 3
+   - 4
+   - 5
+
+5. Final chart screenshot
+   
+   - Upload Screenshot
+
+Finish with:
+
+Swipe → Complete Trade
+
+---
+
+TRADE COMPLETION SCREEN
+
+After completing a trade, show a beautiful summary card:
+
+TRADE COMPLETE ✓
+
+- Result
+- Discipline Score
+- Before Score
+- During Score
+- After Score
+- Screenshot thumbnails
+
+Example:
+
+Discipline Score
+"87 / 100"
+
+Add a subtle success animation.
+
+---
+
+DASHBOARD
+
+Create a clean dashboard showing:
+
+- Today's trades
+- Today's P&L
+- Win Rate
+- Discipline Score
+- Current Streak
+- Total Trades
+
+Also show a Performance Graph.
+
+Graphs should include:
+
+- P&L over time
+- Discipline score over time
+- Win rate
+- Rule-following percentage
+
+Use attractive, minimal charts.
+
+---
+
+TRADE HISTORY
+
+Show trades as clean cards:
+
+Trade #24
+
+WIN
++₹1,240
+
+Discipline: 91%
+
+📸 Screenshot
+
+Tap a trade to see the complete Before → During → After record.
+
+Add filters:
+
+- All
+- Wins
+- Losses
+- Breakeven
+
+---
+
+DATA
+
+Use a proper database so trades persist after refresh.
+
+Each trade should store:
+
+- Date/time
+- Before-trade answers
+- During-trade answers
+- After-trade answers
+- Result
+- Discipline score
+- Screenshots
+- P&L if entered
+- Mistake category
+
+For P&L, allow a simple optional numeric input only in the After Trade stage. Everything else should use buttons/toggles.
+
+---
+
+IMPORTANT UX RULES
+
+- Almost no typing.
+- One question per screen.
+- Large buttons.
+- Automatically advance after selection where appropriate.
+- Swipe gesture for moving between stages.
+- Allow back navigation.
+- Show progress.
+- Save progress so accidental refresh doesn't lose the trade.
+- Make screenshot upload extremely easy.
+- Responsive on Android phones.
+- Fast loading.
+- No unnecessary features.
+- No complicated settings.
+
+Technical preference
+
+Build it as a mobile-first PWA/web app that can later be packaged as an Android app.
+
+Use a modern React-based frontend with clean reusable components and a database/backend suitable for Replit.
+
+Before adding advanced features, make the core trading flow fully functional and polished.
+
+The final result should feel like a premium minimalist trading discipline app, not an Excel sheet or traditional journal.

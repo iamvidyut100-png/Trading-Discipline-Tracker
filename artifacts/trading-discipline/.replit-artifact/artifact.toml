@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Trading Discipline Tracker"
+description = "A mobile-first trading discipline app that helps traders complete fast before, during, and after trade check-ins, preserve their records, and learn from performance over time."
+version = "1.0.0"
+id = "artifacts/trading-discipline"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24281
+
+[services.development]
+run = "pnpm --filter @workspace/trading-discipline run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/trading-discipline", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/trading-discipline/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24281"
+BASE_PATH = "/"

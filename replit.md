@@ -1,6 +1,6 @@
-# [Project name]
+# Trading Discipline Tracker
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A mobile-first trading ritual that helps traders capture before, during, and after trade discipline with minimal typing.
 
 ## Run & Operate
 
@@ -22,15 +22,21 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/trading-discipline/src/` — React dashboard, trade flow, history, and analytics UI
+- `artifacts/api-server/src/routes/trades.ts` — trade CRUD and analytics endpoints
+- `lib/api-spec/openapi.yaml` — source-of-truth API contract
+- `lib/db/src/schema/trades.ts` — PostgreSQL trade record schema
+- `artifacts/trading-discipline/src/index.css` — app theme and visual tokens
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- The web client uses generated React Query hooks from the shared OpenAPI contract.
+- Trade answers are stored as JSONB so the check-in flow can evolve without migrations for every question.
+- Screenshots are represented as an array of paths in the trade record; file-byte storage can be added independently.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Users can review dashboard performance, complete a three-stage trade check-in, browse and filter history, inspect trade details, and view performance trends.
 
 ## User preferences
 

@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: trades
+    description: Trading discipline records
+  - name: analytics
+    description: Trading performance summaries
 paths:
   /healthz:
     get:
@@ -24,7 +28,101 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /trades:
+    get:
+      operationId: listTrades
+      tags: [trades]
+      summary: List trade records
+      responses:
+        "200":
+          description: Trade records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Trade"
+    post:
+      operationId: createTrade
+      tags: [trades]
+      summary: Create a trade record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeInput"
+      responses:
+        "201":
+          description: Created trade
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trade"
+  /trades/{id}:
+    get:
+      operationId: getTrade
+      tags: [trades]
+      summary: Get a trade record
+      parameters:
+        - $ref: "#/components/parameters/TradeId"
+      responses:
+        "200":
+          description: Trade record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trade"
+        "404":
+          description: Trade not found
+    patch:
+      operationId: updateTrade
+      tags: [trades]
+      summary: Update a trade record
+      parameters:
+        - $ref: "#/components/parameters/TradeId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeUpdate"
+      responses:
+        "200":
+          description: Updated trade
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trade"
+    delete:
+      operationId: deleteTrade
+      tags: [trades]
+      summary: Delete a trade record
+      parameters:
+        - $ref: "#/components/parameters/TradeId"
+      responses:
+        "204":
+          description: Deleted
+  /analytics/summary:
+    get:
+      operationId: getAnalyticsSummary
+      tags: [analytics]
+      summary: Get dashboard performance summary
+      responses:
+        "200":
+          description: Performance summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsSummary"
 components:
+  parameters:
+    TradeId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +131,73 @@ components:
           type: string
       required:
         - status
+    Trade:
+      type: object
+      required: [id, createdAt, result, disciplineScore, beforeAnswers, duringAnswers, afterAnswers, screenshots, pnl, mistake]
+      properties:
+        id: { type: number }
+        createdAt: { type: string, format: date-time }
+        result: { type: string, enum: [WIN, LOSS, BREAKEVEN] }
+        disciplineScore: { type: number, minimum: 0, maximum: 100 }
+        beforeAnswers: { type: object, additionalProperties: true }
+        duringAnswers: { type: object, additionalProperties: true }
+        afterAnswers: { type: object, additionalProperties: true }
+        screenshots:
+          type: array
+          items: { type: string }
+        pnl: { type: ["number", "null"] }
+        mistake: { type: string }
+    TradeInput:
+      type: object
+      required: [result, disciplineScore, beforeAnswers, duringAnswers, afterAnswers]
+      properties:
+        result: { type: string, enum: [WIN, LOSS, BREAKEVEN] }
+        disciplineScore: { type: number, minimum: 0, maximum: 100 }
+        beforeAnswers: { type: object, additionalProperties: true }
+        duringAnswers: { type: object, additionalProperties: true }
+        afterAnswers: { type: object, additionalProperties: true }
+        screenshots:
+          type: array
+          items: { type: string }
+        pnl: { type: ["number", "null"] }
+        mistake: { type: string }
+    TradeUpdate:
+      type: object
+      properties:
+        result: { type: string, enum: [WIN, LOSS, BREAKEVEN] }
+        disciplineScore: { type: number, minimum: 0, maximum: 100 }
+        beforeAnswers: { type: object, additionalProperties: true }
+        duringAnswers: { type: object, additionalProperties: true }
+        afterAnswers: { type: object, additionalProperties: true }
+        screenshots:
+          type: array
+          items: { type: string }
+        pnl: { type: ["number", "null"] }
+        mistake: { type: string }
+    AnalyticsSummary:
+      type: object
+      required: [todayTrades, todayPnl, winRate, disciplineScore, currentStreak, totalTrades, pnlSeries, disciplineSeries]
+      properties:
+        todayTrades: { type: number }
+        todayPnl: { type: number }
+        winRate: { type: number }
+        disciplineScore: { type: number }
+        currentStreak: { type: number }
+        totalTrades: { type: number }
+        pnlSeries:
+          type: array
+          items:
+            type: object
+            required: [label, value]
+            properties:
+              label: { type: string }
+              value: { type: number }
+        disciplineSeries:
+          type: array
+          items:
+            type: object
+            required: [label, value]
+            properties:
+              label: { type: string }
+              value: { type: number }
 
