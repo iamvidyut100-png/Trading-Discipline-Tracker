@@ -16,6 +16,7 @@ A mobile-first trading ritual that helps traders capture before, during, and aft
 - pnpm workspaces, Node.js 24, TypeScript 5.9
 - API: Express 5
 - DB: PostgreSQL + Drizzle ORM
+- Auth: cookie-based OIDC sessions with the project's managed identity provider
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
@@ -24,6 +25,8 @@ A mobile-first trading ritual that helps traders capture before, during, and aft
 
 - `artifacts/trading-discipline/src/` — React dashboard, trade flow, history, and analytics UI
 - `artifacts/api-server/src/routes/trades.ts` — trade CRUD and analytics endpoints
+- `artifacts/api-server/src/routes/auth.ts` — browser login, callback, logout, and current-user endpoint
+- `artifacts/api-server/src/middlewares/authMiddleware.ts` — session loading and route identity
 - `lib/api-spec/openapi.yaml` — source-of-truth API contract
 - `lib/db/src/schema/trades.ts` — PostgreSQL trade record schema
 - `artifacts/trading-discipline/src/index.css` — app theme and visual tokens
@@ -33,6 +36,7 @@ A mobile-first trading ritual that helps traders capture before, during, and aft
 - The web client uses generated React Query hooks from the shared OpenAPI contract.
 - Trade answers are stored as JSONB so the check-in flow can evolve without migrations for every question.
 - Screenshots are represented as an array of paths in the trade record; file-byte storage can be added independently.
+- Trade records are scoped by the authenticated user's ID; private screenshot objects are readable only when referenced by that user's trade.
 
 ## Product
 

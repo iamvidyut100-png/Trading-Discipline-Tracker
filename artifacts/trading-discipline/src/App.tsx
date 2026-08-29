@@ -49,6 +49,7 @@ import {
 } from "@workspace/api-client-react";
 import NotFound from "@/pages/not-found";
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from "wouter";
+import { useAuth } from "@workspace/replit-auth-web";
 
 const queryClient = new QueryClient();
 
@@ -114,7 +115,7 @@ function StatusPill({ result }: { result: string }) {
   return <span data-testid={`status-result-${result.toLowerCase()}`} className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[.14em] ${config.className}`}>{config.label}</span>;
 }
 
-function AppShell({ children }: { children: ReactNode }) {
+function AppShell({ children, onLogout }: { children: ReactNode; onLogout: () => void }) {
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   return (
@@ -152,7 +153,7 @@ function AppShell({ children }: { children: ReactNode }) {
           <div className="hidden text-[11px] font-bold uppercase tracking-[.18em] text-muted-foreground md:block">{location === "/" ? "Good to see you" : navItems.find((item) => location.startsWith(item.href) && item.href !== "/")?.label ?? "Trading desk"}</div>
           <div className="ml-auto flex items-center gap-3">
             <span className="hidden text-right sm:block"><span className="block text-[12px] font-semibold">Market open</span><span className="block text-[10px] font-medium text-muted-foreground">NYSE · 09:30—16:00 ET</span></span>
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[hsl(var(--secondary))] text-[12px] font-bold text-primary">TR</span>
+            <button type="button" onClick={onLogout} aria-label="Log out" title="Log out" className="flex h-9 w-9 items-center justify-center rounded-full bg-[hsl(var(--secondary))] text-[12px] font-bold text-primary transition-transform hover:-translate-y-0.5">TR</button>
           </div>
         </header>
         <main className="mx-auto max-w-[1400px] px-5 py-8 md:px-10 md:py-10">{children}</main>
@@ -389,8 +390,8 @@ function Analytics() {
   </div>;
 }
 
-function Router() {
-  return <RoutedErrorBoundary><AppShell><Switch><Route path="/" component={Dashboard} /><Route path="/new-trade" component={NewTrade} /><Route path="/history/:id" component={TradeDetail} /><Route path="/history" component={History} /><Route path="/analytics" component={Analytics} /><Route component={NotFound} /></Switch></AppShell></RoutedErrorBoundary>;
+function Router({ onLogout }: { onLogout: () => void }) {
+  return <RoutedErrorBoundary><AppShell onLogout={onLogout}><Switch><Route path="/" component={Dashboard} /><Route path="/new-trade" component={NewTrade} /><Route path="/history/:id" component={TradeDetail} /><Route path="/history" component={History} /><Route path="/analytics" component={Analytics} /><Route component={NotFound} /></Switch></AppShell></RoutedErrorBoundary>;
 }
 
 function RoutedErrorBoundary({ children }: { children: ReactNode }) {
@@ -398,8 +399,14 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
   return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>;
 }
 
+function AuthGate() {
+  const { login } = useAuth();
+  return <div className="noise flex min-h-[100dvh] items-center justify-center bg-background px-5 text-foreground"><section className="w-full max-w-[430px] rounded-[16px] border border-card-border bg-card p-7 text-center shadow-[0_18px_50px_hsl(var(--primary)/.08)]"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[13px] bg-primary text-primary-foreground"><Target size={23} /></div><h1 className="mt-6 font-display text-[31px] font-bold tracking-[-.06em]">Keep your process close.</h1><p className="mt-3 text-[14px] leading-6 text-muted-foreground">Log in to continue to your private trading desk. Account creation and password recovery are available on the secure sign-in screen.</p><Button onClick={login} className="mt-7 w-full" data-testid="button-login">Log in / Sign up</Button><p className="mt-4 text-[11px] text-muted-foreground">Forgot your password? Choose “Forgot password” after continuing.</p></section></div>;
+}
+
 function App() {
-  return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>;
+  const auth = useAuth();
+  return <QueryClientProvider client={queryClient}><TooltipProvider>{auth.isLoading ? <LoadingBlock /> : !auth.isAuthenticated ? <AuthGate /> : <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}><Router onLogout={auth.logout} /></WouterRouter>}<Toaster /></TooltipProvider></QueryClientProvider>;
 }
 
 export default App;

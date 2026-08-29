@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db, tradesTable } from "@workspace/db";
 import {
   CreateTradeBody,
@@ -24,12 +24,22 @@ function serializeTrade(trade: typeof tradesTable.$inferSelect) {
   };
 }
 
-router.get("/trades", async (_req, res): Promise<void> => {
-  const trades = await db.select().from(tradesTable).orderBy(desc(tradesTable.createdAt));
+router.get("/trades", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  const trades = await db.select().from(tradesTable)
+    .where(eq(tradesTable.userId, req.user.id))
+    .orderBy(desc(tradesTable.createdAt));
   res.json(ListTradesResponse.parse(trades.map(serializeTrade)));
 });
 
 router.post("/trades", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
   const parsed = CreateTradeBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -37,6 +47,7 @@ router.post("/trades", async (req, res): Promise<void> => {
   }
   const [trade] = await db.insert(tradesTable).values({
     ...parsed.data,
+    userId: req.user.id,
     disciplineScore: String(parsed.data.disciplineScore),
     pnl: parsed.data.pnl == null ? null : String(parsed.data.pnl),
   }).returning();
@@ -44,12 +55,19 @@ router.post("/trades", async (req, res): Promise<void> => {
 });
 
 router.get("/trades/:id", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
   const params = GetTradeParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const [trade] = await db.select().from(tradesTable).where(eq(tradesTable.id, params.data.id));
+  const [trade] = await db.select().from(tradesTable).where(and(
+    eq(tradesTable.id, params.data.id),
+    eq(tradesTable.userId, req.user.id),
+  ));
   if (!trade) {
     res.status(404).json({ error: "Trade not found" });
     return;
@@ -58,6 +76,10 @@ router.get("/trades/:id", async (req, res): Promise<void> => {
 });
 
 router.patch("/trades/:id", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
   const params = UpdateTradeParams.safeParse(req.params);
   const parsed = UpdateTradeBody.safeParse(req.body);
   if (!params.success) {
@@ -77,7 +99,10 @@ router.patch("/trades/:id", async (req, res): Promise<void> => {
   if (parsed.data.mistake !== undefined) patch.mistake = parsed.data.mistake;
   if (parsed.data.disciplineScore !== undefined) patch.disciplineScore = String(parsed.data.disciplineScore);
   if (parsed.data.pnl !== undefined) patch.pnl = parsed.data.pnl == null ? null : String(parsed.data.pnl);
-  const [trade] = await db.update(tradesTable).set(patch).where(eq(tradesTable.id, params.data.id)).returning();
+  const [trade] = await db.update(tradesTable).set(patch).where(and(
+    eq(tradesTable.id, params.data.id),
+    eq(tradesTable.userId, req.user.id),
+  )).returning();
   if (!trade) {
     res.status(404).json({ error: "Trade not found" });
     return;
@@ -86,12 +111,19 @@ router.patch("/trades/:id", async (req, res): Promise<void> => {
 });
 
 router.delete("/trades/:id", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
   const params = DeleteTradeParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const [trade] = await db.delete(tradesTable).where(eq(tradesTable.id, params.data.id)).returning();
+  const [trade] = await db.delete(tradesTable).where(and(
+    eq(tradesTable.id, params.data.id),
+    eq(tradesTable.userId, req.user.id),
+  )).returning();
   if (!trade) {
     res.status(404).json({ error: "Trade not found" });
     return;
@@ -99,8 +131,14 @@ router.delete("/trades/:id", async (req, res): Promise<void> => {
   res.sendStatus(204);
 });
 
-router.get("/analytics/summary", async (_req, res): Promise<void> => {
-  const trades = (await db.select().from(tradesTable).orderBy(desc(tradesTable.createdAt))).map(serializeTrade);
+router.get("/analytics/summary", async (req, res): Promise<void> => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  const trades = (await db.select().from(tradesTable)
+    .where(eq(tradesTable.userId, req.user.id))
+    .orderBy(desc(tradesTable.createdAt))).map(serializeTrade);
   const wins = trades.filter((trade) => trade.result === "WIN").length;
   const today = new Date().toISOString().slice(0, 10);
   const todaysTrades = trades.filter((trade) => trade.createdAt.toISOString().slice(0, 10) === today);
