@@ -14,6 +14,8 @@ tags:
     description: Trading discipline records
   - name: analytics
     description: Trading performance summaries
+  - name: storage
+    description: Screenshot uploads
 paths:
   /healthz:
     get:
@@ -115,6 +117,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AnalyticsSummary"
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      tags: [storage]
+      summary: Request a presigned screenshot upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestUploadUrlInput"
+      responses:
+        "200":
+          description: Presigned upload details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestUploadUrl"
 components:
   parameters:
     TradeId:
@@ -200,4 +220,24 @@ components:
             properties:
               label: { type: string }
               value: { type: number }
+    RequestUploadUrlInput:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name: { type: string }
+        size: { type: number }
+        contentType: { type: string }
+    RequestUploadUrl:
+      type: object
+      required: [uploadURL, objectPath, metadata]
+      properties:
+        uploadURL: { type: string }
+        objectPath: { type: string }
+        metadata:
+          type: object
+          required: [name, size, contentType]
+          properties:
+            name: { type: string }
+            size: { type: number }
+            contentType: { type: string }
 

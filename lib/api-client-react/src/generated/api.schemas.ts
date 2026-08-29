@@ -125,3 +125,21 @@ export interface AnalyticsSummary {
   disciplineSeries: AnalyticsSummaryDisciplineSeriesItem[];
 }
 
+export interface RequestUploadUrlInput {
+  name: string;
+  size: number;
+  contentType: string;
+}
+
+export type RequestUploadUrlMetadata = {
+  name: string;
+  size: number;
+  contentType: string;
+};
+
+export interface RequestUploadUrl {
+  uploadURL: string;
+  objectPath: string;
+  metadata: RequestUploadUrlMetadata;
+}
+
