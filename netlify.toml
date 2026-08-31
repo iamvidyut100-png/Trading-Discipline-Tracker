@@ -1,0 +1,8 @@
+[build]
+  command = "BASE_PATH=/ PORT=8888 pnpm --filter @workspace/mockup-sandbox build"
+  publish = "artifacts/mockup-sandbox/dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
