@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
@@ -49,7 +49,15 @@ import {
 } from "@workspace/api-client-react";
 import NotFound from "@/pages/not-found";
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from "wouter";
-import { useAuth } from "@workspace/replit-auth-web";
+import {
+  completeOAuthCallback,
+  restoreSession,
+  signInWithGoogle,
+  signInWithPassword,
+  signOut,
+  signUp,
+  type SupabaseUser,
+} from "@/lib/supabase-auth";
 
 const queryClient = new QueryClient();
 
@@ -399,14 +407,55 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
   return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>;
 }
 
-function AuthGate() {
-  const { login } = useAuth();
-  return <div className="noise flex min-h-[100dvh] items-center justify-center bg-background px-5 text-foreground"><section className="w-full max-w-[430px] rounded-[16px] border border-card-border bg-card p-7 text-center shadow-[0_18px_50px_hsl(var(--primary)/.08)]"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[13px] bg-primary text-primary-foreground"><Target size={23} /></div><h1 className="mt-6 font-display text-[31px] font-bold tracking-[-.06em]">Keep your process close.</h1><p className="mt-3 text-[14px] leading-6 text-muted-foreground">Log in to continue to your private trading desk. Account creation and password recovery are available on the secure sign-in screen.</p><Button onClick={login} className="mt-7 w-full" data-testid="button-login">Log in / Sign up</Button><p className="mt-4 text-[11px] text-muted-foreground">Forgot your password? Choose “Forgot password” after continuing.</p></section></div>;
+function AuthGate({ onAuthenticated }: { onAuthenticated: (user: SupabaseUser) => void }) {
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [status, setStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setStatus("");
+    setIsSubmitting(true);
+    try {
+      if (mode === "login") onAuthenticated(await signInWithPassword(email, password));
+      else {
+        const result = await signUp(email, password);
+        if (result.session && result.user) onAuthenticated(result.user);
+        else setStatus("Check your email to confirm your account, then log in.");
+      }
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Authentication could not be completed.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  const google = () => {
+    setStatus("");
+    try { signInWithGoogle(); } catch (error) { setStatus(error instanceof Error ? error.message : "Google sign-in could not be started."); }
+  };
+  return <div className="noise flex min-h-[100dvh] items-center justify-center bg-background px-5 text-foreground"><section className="w-full max-w-[430px] rounded-[16px] border border-card-border bg-card p-7 shadow-[0_18px_50px_hsl(var(--primary)/.08)]"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[13px] bg-primary text-primary-foreground"><Target size={23} /></div><div className="text-center"><h1 className="mt-6 font-display text-[31px] font-bold tracking-[-.06em]">Keep your process close.</h1><p className="mt-3 text-[14px] leading-6 text-muted-foreground">{mode === "login" ? "Log in to continue to your private trading desk." : "Create an account to start your private trading desk."}</p></div><form className="mt-7 space-y-4" onSubmit={submit}><label className="block text-[11px] font-bold uppercase tracking-[.13em] text-muted-foreground">Email<input data-testid="input-auth-email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 w-full rounded-[9px] border border-input bg-background px-3 py-3 text-[14px] normal-case tracking-normal text-foreground outline-none focus:border-secondary" /></label><label className="block text-[11px] font-bold uppercase tracking-[.13em] text-muted-foreground">Password<input data-testid="input-auth-password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={6} required value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 w-full rounded-[9px] border border-input bg-background px-3 py-3 text-[14px] normal-case tracking-normal text-foreground outline-none focus:border-secondary" /></label><Button type="submit" disabled={isSubmitting} className="w-full" data-testid="button-auth-submit">{isSubmitting ? "Please wait…" : mode === "login" ? "Log in" : "Create account"}</Button></form><div className="my-5 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[.14em] text-muted-foreground/70"><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div><Button type="button" variant="outline" onClick={google} className="w-full" data-testid="button-google-signin">Continue with Google</Button>{status && <p role="status" className="mt-4 text-center text-[12px] leading-5 text-muted-foreground">{status}</p>}<p className="mt-6 text-center text-[12px] text-muted-foreground">{mode === "login" ? "New here?" : "Already have an account?"} <button type="button" onClick={() => { setMode(mode === "login" ? "signup" : "login"); setStatus(""); }} className="font-bold text-foreground underline underline-offset-4">{mode === "login" ? "Create an account" : "Log in"}</button></p></section></div>;
 }
 
 function App() {
-  const auth = useAuth();
-  return <QueryClientProvider client={queryClient}><TooltipProvider>{auth.isLoading ? <LoadingBlock /> : !auth.isAuthenticated ? <AuthGate /> : <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}><Router onLogout={auth.logout} /></WouterRouter>}<Toaster /></TooltipProvider></QueryClientProvider>;
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  useEffect(() => {
+    let active = true;
+    const initialize = async () => {
+      try {
+        const oauthUser = await completeOAuthCallback();
+        const restoredUser = oauthUser ?? await restoreSession();
+        if (active) setUser(restoredUser);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    };
+    void initialize();
+    return () => { active = false; };
+  }, []);
+  const logout = async () => { await signOut(); setUser(null); };
+  return <QueryClientProvider client={queryClient}><TooltipProvider>{isLoading ? <LoadingBlock /> : !user ? <AuthGate onAuthenticated={setUser} /> : <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}><Router onLogout={() => { void logout(); }} /></WouterRouter>}<Toaster /></TooltipProvider></QueryClientProvider>;
 }
 
 export default App;
