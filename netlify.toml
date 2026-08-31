@@ -1,6 +1,6 @@
 [build]
-  command = "BASE_PATH=/ PORT=8888 pnpm --filter @workspace/mockup-sandbox build"
-  publish = "artifacts/mockup-sandbox/dist"
+  command = "BASE_PATH=/ PORT=8888 pnpm --filter @workspace/trading-discipline build"
+  publish = "artifacts/trading-discipline/dist/public"
 
 [[redirects]]
   from = "/*"
