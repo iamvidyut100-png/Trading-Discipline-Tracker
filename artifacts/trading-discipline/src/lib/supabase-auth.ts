@@ -1,16 +1,12 @@
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, "");
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || "https://wcbkpwmlztkdafiucjni.supabase.co").replace(/\/$/, "");
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_T1nh8kXAVGa2RQGbe56h1g_Tv1foc5t";
 const SESSION_KEY = "trading-discipline.supabase-session";
 
 export type SupabaseUser = { id: string; email?: string; user_metadata?: Record<string, unknown> };
 type StoredSession = { access_token: string; refresh_token?: string; expires_at?: number; user: SupabaseUser };
-
 type AuthResponse = { access_token?: string; refresh_token?: string; expires_in?: number; user?: SupabaseUser; error_description?: string; msg?: string };
 
 function requireConfig() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    throw new Error("Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Netlify.");
-  }
   return { url: SUPABASE_URL, key: SUPABASE_ANON_KEY };
 }
 
